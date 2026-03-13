@@ -2,7 +2,7 @@
   "name": "docflow",
   "version": "1.0.0",
   "description": "DocFlow - Éditeur de documents universel avec React",
-  "homepage": "https://compaoref.github.io/docflow",
+  "homepage": "https://compaoref.github.io/Docs-dition-/",
   "private": true,
   "dependencies": {
     "react": "^18.2.0",
