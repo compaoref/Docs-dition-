@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocFlow - Éditeur de Documents Universel</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Quill Editor for Rich Text -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 10px 40px rgba(0,0,0,0.1);
+            --shadow-lg: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            color: var(--dark);
+            overflow: hidden;
+        }
+
+        /* ===== LAYOUT PRINCIPAL ===== */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background: var(--light);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--dark) 0%, #1e293b 100%);
+            color: white;
+            overflow-y: auto;
+            padding: 25px 0;
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 20px 20px 30px;
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+
+        .nav-section {
+            padding: 0 10px;
+        }
+
+        .nav-title {
+            display: none;
+        }
+
+        .nav-btn {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            text-align: left;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+
+        .nav-btn.active {
+            background: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-area {
+            flex: 1;
+            overflow: auto;
+            padding: 40px;
+        }
+
+        /* ===== DASHBOARD ===== */
+        .dashboard-header {
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            color: var(--gray);
+            font-size: 1rem;
+        }
+
+        .dashboard-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            border-color: var(--primary);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* Documents Grid */
+        .documents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .document-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .document-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary);
+        }
+
+        .doc-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .doc-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+
+        .doc-meta {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+
+        .doc-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .doc-action-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            background: var(--light);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .doc-action-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* ===== EDITOR INTERFACE ===== */
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .editor-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 30px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .editor-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            flex: 1;
+        }
+
+        .editor-toolbar {
+            padding: 15px 30px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            overflow-x: auto;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding-right: 15px;
+            border-right: 1px solid var(--border);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .tool-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .tool-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tool-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .tool-select:hover {
+            border-color: var(--primary);
+        }
+
+        .editor-workspace {
+            flex: 1;
+            overflow: auto;
+            padding: 30px;
+            background: white;
+        }
+
+        /* ===== TEXT EDITOR ===== */
+        #textEditor {
+            height: 100%;
+            background: white;
+        }
+
+        .ql-toolbar {
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+        }
+
+        .ql-container {
+            font-family: 'Poppins', sans-serif !important;
+            font-size: 1rem !important;
+            border: none !important;
+        }
+
+        .ql-editor {
+            padding: 0 !important;
+            min-height: 100%;
+        }
+
+        /* ===== SPREADSHEET EDITOR ===== */
+        .spreadsheet-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .spreadsheet-grid {
+            flex: 1;
+            overflow: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .grid-table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: max-content;
+        }
+
+        .grid-cell {
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            min-width: 80px;
+            height: 32px;
+            background: white;
+        }
+
+        .grid-cell:hover {
+            background: #f0f4f8;
+        }
+
+        .grid-cell.selected {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--primary);
+        }
+
+        .grid-header {
+            background: var(--light);
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .grid-row-header {
+            background: var(--light);
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            width: 40px;
+        }
+
+        .grid-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            padding: 8px 12px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* ===== SLIDES EDITOR ===== */
+        .slides-container {
+            display: flex;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .slides-panel {
+            width: 250px;
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .slide-thumbnail {
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s ease;
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide-thumbnail:hover {
+            border-color: var(--primary);
+        }
+
+        .slide-thumbnail.active {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .slide-editor {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+        }
+
+        .slide-canvas {
+            width: 960px;
+            height: 540px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 60px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* ===== MODALS ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        /* ===== UTILITIES ===== */
+        .hidden {
+            display: none !important;
+        }
+
+        .spinner {
+            border: 3px solid var(--light);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+
+            .sidebar-header {
+                padding: 0 10px 20px;
+            }
+
+            .nav-title,
+            .logo .text {
+                display: none;
+            }
+
+            .documents-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .editor-toolbar {
+                padding: 10px 15px;
+            }
+
+            .slide-canvas {
+                width: 100%;
+                height: auto;
+            }
+        }
+
+        /* ===== SCROLLBAR STYLING ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span>📄</span>
+                    <span>DocFlow</span>
+                </div>
+            </div>
+
+            <div class="nav-section" style="margin-top: 30px;">
+                <button class="nav-btn active" onclick="showView('dashboard')">
+                    <span>🏠</span>
+                    <span>Mes Documents</span>
+                </button>
+                <button class="nav-btn" onclick="createNewDocument('text')">
+                    <span>📝</span>
+                    <span>Nouveau Texte</span>
+                </button>
+                <button class="nav-btn" onclick="createNewDocument('sheet')">
+                    <span>📊</span>
+                    <span>Nouveau Tableur</span>
+                </button>
+                <button class="nav-btn" onclick="createNewDocument('slides')">
+                    <span>🎞️</span>
+                    <span>Nouvelles Slides</span>
+                </button>
+                <button class="nav-btn" onclick="openImportModal()">
+                    <span>📥</span>
+                    <span>Importer</span>
+                </button>
+            </div>
+
+            <div class="nav-section" style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                <button class="nav-btn" onclick="showStorageInfo()">
+                    <span>💾</span>
+                    <span>Stockage</span>
+                </button>
+                <button class="nav-btn" onclick="openSettings()">
+                    <span>⚙️</span>
+                    <span>Paramètres</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="content-area" id="contentArea">
+                <!-- DASHBOARD VIEW -->
+                <div id="dashboardView">
+                    <div class="dashboard-header">
+                        <h1 class="page-title">Mes Documents</h1>
+                        <p class="page-subtitle">Gérez et éditez vos documents facilement</p>
+                    </div>
+
+                    <div class="dashboard-actions">
+                        <button class="btn btn-primary" onclick="openImportModal()">
+                            📥 Importer un Fichier
+                        </button>
+                        <button class="btn btn-secondary" onclick="createNewDocument('text')">
+                            📝 Nouveau Texte
+                        </button>
+                        <button class="btn btn-secondary" onclick="createNewDocument('sheet')">
+                            📊 Nouveau Tableur
+                        </button>
+                        <button class="btn btn-secondary" onclick="createNewDocument('slides')">
+                            🎞️ Nouvelle Présentation
+                        </button>
+                    </div>
+
+                    <div id="documentsList" class="documents-grid"></div>
+                </div>
+
+                <!-- EDITOR VIEW (HIDDEN BY DEFAULT) -->
+                <div id="editorView" class="hidden editor-container">
+                    <div class="editor-header">
+                        <h2 class="editor-title" id="editorTitle">Éditeur</h2>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <span id="docSize" style="color: var(--gray); font-size: 0.9rem;"></span>
+                            <button class="btn btn-secondary" onclick="goToDashboard()">← Retour</button>
+                            <button class="btn btn-primary" onclick="openExportModal()">📥 Exporter</button>
+                        </div>
+                    </div>
+
+                    <!-- TOOLBAR (DIFFERENT PER TYPE) -->
+                    <div id="toolbar" class="editor-toolbar"></div>
+
+                    <!-- WORKSPACE -->
+                    <div id="workspace" class="editor-workspace"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMPORT MODAL -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">📥 Importer un Document</h2>
+            <div class="form-group">
+                <label class="form-label">Sélectionnez un fichier</label>
+                <input type="file" id="fileInput" class="form-input" accept=".txt,.pdf,.docx,.xlsx,.csv,.md,.pptx">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nom du document</label>
+                <input type="text" id="docNameInput" class="form-input" placeholder="Mon document">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="importDocument()" style="flex: 1;">Importer</button>
+                <button class="btn btn-secondary" onclick="closeModal('importModal')" style="flex: 1;">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXPORT MODAL -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">📥 Exporter le Document</h2>
+            <div class="form-group">
+                <label class="form-label">Format d'export</label>
+                <select id="exportFormat" class="form-input">
+                    <option value="pdf">PDF</option>
+                    <option value="docx">Word (.docx)</option>
+                    <option value="xlsx">Excel (.xlsx)</option>
+                    <option value="txt">Texte (.txt)</option>
+                    <option value="md">Markdown (.md)</option>
+                    <option value="csv">CSV</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="exportDocument()" style="flex: 1;">Exporter</button>
+                <button class="btn btn-secondary" onclick="closeModal('exportModal')" style="flex: 1;">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">⚙️ Paramètres</h2>
+            <div class="form-group">
+                <label class="form-label">Thème</label>
+                <select class="form-input" onchange="setTheme(this.value)">
+                    <option value="light">Clair</option>
+                    <option value="dark">Sombre</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sauvegarde Automatique</label>
+                <select class="form-input">
+                    <option>Chaque 10 secondes</option>
+                    <option>Chaque 30 secondes</option>
+                    <option>Chaque minute</option>
+                </select>
+            </div>
+            <button class="btn btn-danger" onclick="clearAllData()" style="width: 100%;">🗑️ Supprimer tous les documents</button>
+            <button class="btn btn-secondary" onclick="closeModal('settingsModal')" style="width: 100%; margin-top: 10px;">Fermer</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="docflow.js"></script>
+</body>
+</html>
